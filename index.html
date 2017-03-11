@@ -2,13 +2,28 @@
     <head>
         <title>Internet Uptime Dashboard</title>
 
+        <link rel="stylesheet" type="text/css" href="stylesheet.css">
+
+        <script src="moment.js" defer></script>
         <script src="Chart.js" defer></script>
         <script src="dashboard.js" defer ></script>
     </head>
 
     <body>
-        <div style="width: 50%; height: 50%">
-            <canvas id="testchart"></canvas>
+        <div id="top-left">
+            <canvas id="chart-instant"></canvas>
+        </div>
+
+        <div id="top-right">
+            <canvas id="chart-today"></canvas>
+        </div>
+
+        <div id="bottom-left">
+            <canvas id="chart-30days"></canvas>
+        </div>
+
+        <div id="bottom-right">
+            <canvas id="chart-lifetime"></canvas>
         </div>
     </body>
 </html>
