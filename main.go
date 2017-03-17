@@ -8,13 +8,14 @@ import (
 	"time"
 	"net"
 	"net/http"
+	"encoding/json"
 	"database/sql"
 	_ "github.com/mattn/go-sqlite3"
 )
 
 const (
-	// Dashboard
-	DASHBOARD_PORT = 8080
+	// Dashboard and API Server
+	SERVER_PORT = 18080
 
 	// Monitoring
 	UPTIME_CHECK_INTERVAL = 30 * time.Second
@@ -24,6 +25,7 @@ const (
 	LOG_UP   = false
 	LOG_DOWN = true
 	LOG_DBG  = false
+	LOG_API  = true
 
 	// Databse
 	DB_NAME              = "uptime.db"
@@ -241,6 +243,115 @@ func monitorUptime() {
 	}
 }
 
+func apiInstant(w http.ResponseWriter, r *http.Request) {
+	// Ignore all methods apart from GET
+	if r.Method != "GET" {
+		w.WriteHeader(http.StatusTeapot)
+		if LOG_API {
+			log.Println("GET/daily request from", r.RemoteAddr[:strings.LastIndex(r.RemoteAddr, ":")])
+		}
+		return
+	}
+
+	if LOG_API {
+		log.Println("GET/instant request from", r.URL)
+	}
+
+	// Read the data from the database
+	rows, err := db.Query("SELECT * FROM " + DB_TABLE_INSTANT)
+	if err != nil {
+		log.Printf("Failed to read from table %s: %v\n", DB_TABLE_INSTANT, err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+
+	// JSON object template struct
+	type instantInfo struct {
+		Timestamp  string `json:"timestamp"`
+		State      bool   `json:"up"`
+	}
+
+	// Put the data into a slice of structs
+	var data []instantInfo
+	for rows.Next() {
+		var t time.Time
+		var state bool
+
+		err = rows.Scan(&t, &state)
+		checkDbError(err)
+
+		data = append(data, instantInfo{t.Format("2006-01-02 15:04"), state})
+	}
+
+	// Encode the data as JSON
+	jdata, err := json.Marshal(map[string]interface{} {"data": data})
+	if err != nil {
+		log.Println("Failed to encode instant data into JSON:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	// Send the JSON data to the client
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(jdata)
+}
+
+func apiDaily(w http.ResponseWriter, r *http.Request) {
+	// Ignore all methods apart from GET
+	if r.Method != "GET" {
+		w.WriteHeader(http.StatusTeapot)
+		if LOG_API {
+			log.Println("Not responing to method", r.Method, "from", r.URL)
+		}
+		return
+	}
+
+	if LOG_API {
+		log.Println("GET/daily request from", r.RemoteAddr[:strings.LastIndex(r.RemoteAddr, ":")])
+	}
+
+	// Read the data from the database
+	rows, err := db.Query("SELECT * FROM " + DB_TABLE_DAILY)
+	if err != nil {
+		log.Printf("Failed to read from table %s: %v\n", DB_TABLE_DAILY, err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+
+	// JSON object template struct
+	type dailyInfo struct {
+		Day  string `json:"day"`
+		Up   int    `json:"up"`
+		Down int    `json:"down"`
+	}
+
+	// Put the data into a slice of structs
+	var data []dailyInfo
+	for rows.Next() {
+		var day time.Time
+		var up, down int
+
+		err = rows.Scan(&day, &up, &down)
+		checkDbError(err)
+
+		data = append(data, dailyInfo{day.Format("2006-01-02"), up, down})
+	}
+
+	// Encode the data as JSON
+	jdata, err := json.Marshal(map[string]interface{} {"data": data})
+	if err != nil {
+		log.Println("Failed to encode daily data into JSON:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	// Send the JSON data to the client
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(jdata)
+}
+
 func main() {
 	db = initDatabase()
 	defer db.Close()
@@ -248,9 +359,14 @@ func main() {
 	go monitorUptime()
 	go db.cleanupOldInstantData()
 
+	// Dashboard server
 	server := http.FileServer(http.Dir("dashboard"))
 	http.Handle("/", server)
 
-	fmt.Printf("Listening on port %d...\n", DASHBOARD_PORT)
-	http.ListenAndServe(":" + strconv.Itoa(DASHBOARD_PORT), nil)
+	// Data API
+	http.HandleFunc("/api/instant", apiInstant)
+	http.HandleFunc("/api/daily", apiDaily)
+
+	fmt.Printf("Listening on port %d...\n", SERVER_PORT)
+	http.ListenAndServe(":" + strconv.Itoa(SERVER_PORT), nil)
 }
