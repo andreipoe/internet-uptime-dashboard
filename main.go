@@ -260,7 +260,8 @@ func apiInstant(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Read the data from the database
-	rows, err := db.Query("SELECT * FROM " + DB_TABLE_INSTANT)
+	threshold := time.Now().Add(-24 * time.Hour).Truncate(time.Hour).Add(time.Hour)
+	rows, err := db.Query("SELECT * FROM " + DB_TABLE_INSTANT + " WHERE time > datetime(?)", threshold)
 	if err != nil {
 		log.Printf("Failed to read from table %s: %v\n", DB_TABLE_INSTANT, err)
 		w.WriteHeader(http.StatusInternalServerError)
