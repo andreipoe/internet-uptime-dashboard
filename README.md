@@ -1,20 +1,36 @@
 # Internet Uptime Dashboard
 
-A simple, self-contained solution for Internet services uptime monitoring writting in go.
+A simple, self-contained solution for home Internet connection uptime monitoring written in Go.
 
 ## Features
 
-This project trades customisability for simplicity. It consists of a single web-page showing a combination of uptime data charts. All the data is collected using, stored and served using go. The few user settings, such as the port of the web server, can be tweaked in the `const` block of `main.go`. The top of `dashboard.js` contains constants for the graphs' colours and the API server's URL.
+This tool trades customisability for simplicity. The frontend consists of a single web-page showing a combination of uptime data charts. All the data is collected, stored and served using a single Go applicaton and a standalone sqlite3 database.
+
+## Configuration
+
+The server's settings can be tweaked in the `const` block of `main.go`. The web dashboard settings are the top of the `dashboard.js` file. The only required configuration is setting the URL of the API in `dashboard.js`.
 
 ## Running instructions
 
-0. Make sure you have `go` installed.
+### Prerequisites
+
+* A [Go](https://golang.org/doc/install) installation.
+* The [go-sqlite3](https://github.com/mattn/go-sqlite3) package.
+
+### Setting up
+
 1. Download or clone this repository.
-2. Run `go build` to build the server.
-3. Run the server, and optionally set it to auto-start on boot.
+2. Build the server, e.g. using `go build`.
+3. Run the server (and optionally set it to auto-start on boot).
 4. Set the URL of your server in `API_URL` at the top of `dashboard.js`.
 5. Be amazed by how bad your ISP's service is.
 
 ## TODOs
 
-* Some kind of export to csv.
+* Some kind of export function, e.g. to csv.
+
+----------
+
+## Credits
+
+This project is made possible by free and open source software: [Go](https://golang.org/), [Chart.js](http://www.chartjs.org/), [Moment.js](https://momentjs.com/) and [SQLite](http://www.sqlite.org/).
