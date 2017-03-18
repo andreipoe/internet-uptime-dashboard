@@ -244,17 +244,19 @@ func monitorUptime() {
 }
 
 func apiInstant(w http.ResponseWriter, r *http.Request) {
+	remoteIP := r.RemoteAddr[:strings.LastIndex(r.RemoteAddr, ":")]
+
 	// Ignore all methods apart from GET
 	if r.Method != "GET" {
 		w.WriteHeader(http.StatusTeapot)
 		if LOG_API {
-			log.Println("GET/daily request from", r.RemoteAddr[:strings.LastIndex(r.RemoteAddr, ":")])
+			log.Println("GET/daily request from", remoteIP)
 		}
 		return
 	}
 
 	if LOG_API {
-		log.Println("GET/instant request from", r.URL)
+		log.Println("GET/instant request from", remoteIP)
 	}
 
 	// Read the data from the database
@@ -298,17 +300,19 @@ func apiInstant(w http.ResponseWriter, r *http.Request) {
 }
 
 func apiDaily(w http.ResponseWriter, r *http.Request) {
+	remoteIP := r.RemoteAddr[:strings.LastIndex(r.RemoteAddr, ":")]
+
 	// Ignore all methods apart from GET
 	if r.Method != "GET" {
 		w.WriteHeader(http.StatusTeapot)
 		if LOG_API {
-			log.Println("Not responing to method", r.Method, "from", r.URL)
+			log.Println("Not responing to method", r.Method, "from", remoteIP)
 		}
 		return
 	}
 
 	if LOG_API {
-		log.Println("GET/daily request from", r.RemoteAddr[:strings.LastIndex(r.RemoteAddr, ":")])
+		log.Println("GET/daily request from", remoteIP)
 	}
 
 	// Read the data from the database
