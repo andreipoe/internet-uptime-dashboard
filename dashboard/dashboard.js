@@ -1,5 +1,6 @@
 "use strict";
 
+// Dashboard settings
 const COLOR_BACKGROUND_RED    = 'rgba(255, 99, 132, 0.2)';
 const COLOR_BACKGROUND_ORANGE = 'rgba(252, 138, 7, 0.2)';
 const COLOR_BACKGROUND_BLUE   = 'rgba(54, 162, 235, 0.2)';
@@ -14,7 +15,23 @@ const COLOR_BORDER_UP       = COLOR_BORDER_GREEN;
 const COLOR_BACKGROUND_DOWN = COLOR_BACKGROUND_ORANGE;
 const COLOR_BORDER_DOWN     = COLOR_BORDER_ORANGE;
 
-function drawTodayChart() {
+// API settings
+const API_URL = "http://your.hostname.here/api/"
+
+////////////////////
+// Dashboard drawing
+////////////////////
+
+function makePercentages(up, down) {
+    var pctUp   = parseFloat(up)/(up+down)*100;
+    var pctDown = parseFloat(down)/(up+down)*100;
+
+    return { up: pctUp.toFixed(2), down: pctDown.toFixed(2) };
+}
+
+function drawTodayChart(up, down) {
+    var data = makePercentages(up, down);
+
     var ctx        = document.getElementById("chart-today");
     var todayChart = new Chart(ctx, {
         type: 'doughnut',
@@ -22,7 +39,7 @@ function drawTodayChart() {
             labels: ["Up", "Down"],
             datasets: [{
                 label: 'Uptime Today',
-                data: [90, 10],
+                data: [data.up, data.down],
                 backgroundColor: [
                     COLOR_BACKGROUND_UP,
                     COLOR_BACKGROUND_DOWN
@@ -45,7 +62,9 @@ function drawTodayChart() {
     });
 }
 
-function drawLifetimeChart() {
+function drawLifetimeChart(up, down) {
+    var data = makePercentages(up, down)
+
     var ctx        = document.getElementById("chart-lifetime");
     var todayChart = new Chart(ctx, {
         type: 'doughnut',
@@ -53,7 +72,7 @@ function drawLifetimeChart() {
             labels: ["Up", "Down"],
             datasets: [{
                 label: 'Lifetime Uptime',
-                data: [95, 5],
+                data: [data.up, data.down],
                 backgroundColor: [
                     COLOR_BACKGROUND_UP,
                     COLOR_BACKGROUND_DOWN
@@ -76,17 +95,14 @@ function drawLifetimeChart() {
     });
 }
 
-function drawInstantChart() {
+function drawInstantChart(data) {
+    var labels = data.map(d => { return d.timestamp });
+    var states = data.map(d => { return d.up ? 1 : 0 });
+
     var ctx          = document.getElementById("chart-instant");
     var instantChart = Chart.Line(ctx, {
         data: {
-            labels:  ['2017-03-11 00:00', '2017-03-11 01:00', '2017-03-11 02:00', '2017-03-11 03:00',
-                '2017-03-11 04:00', '2017-03-11 05:00', '2017-03-11 06:00', '2017-03-11 07:00',
-                '2017-03-11 08:00', '2017-03-11 09:00', '2017-03-11 10:00', '2017-03-11 11:00',
-                '2017-03-11 12:00', '2017-03-11 13:00', '2017-03-11 14:00', '2017-03-11 15:00',
-                '2017-03-11 16:00', '2017-03-11 17:00', '2017-03-11 18:00', '2017-03-11 19:00',
-                '2017-03-11 20:00', '2017-03-11 21:00', '2017-03-11 22:00', '2017-03-11 23:00',
-                '2017-03-11 24:00' ],
+            labels:  labels,
             datasets: [
                 {
                     label: "Instant Uptime",
@@ -108,7 +124,7 @@ function drawInstantChart() {
                     pointHoverBorderWidth: 2,
                     pointRadius: 1,
                     pointHitRadius: 10,
-                    data: [1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1],
+                    data: states,
                     spanGaps: false,
                 }
             ]
@@ -148,15 +164,14 @@ function drawInstantChart() {
     });
 }
 
-function drawAverageChart() {
+function drawAverageChart(data) {
+    var labels  = data.map(d => { return d.day });
+    var uptimes = data.map(d => { return makePercentages(d.up, d.down).up });
+
     var ctx          = document.getElementById("chart-30days");
     var instantChart = Chart.Line(ctx, {
         data: {
-            labels: ['2017-03-01', '2017-03-02', '2017-03-03', '2017-03-04', '2017-03-05', '2017-03-06',
-                '2017-03-07', '2017-03-08', '2017-03-09', '2017-03-10', '2017-03-11', '2017-03-12', '2017-03-13',
-                '2017-03-14', '2017-03-15', '2017-03-16', '2017-03-17', '2017-03-18', '2017-03-19', '2017-03-20',
-                '2017-03-21', '2017-03-22', '2017-03-23', '2017-03-24', '2017-03-25', '2017-03-26', '2017-03-27',
-                '2017-03-28', '2017-03-29', '2017-03-30'],
+            labels: labels,
             datasets: [
                 {
                     label: "Daily Uptime",
@@ -177,9 +192,7 @@ function drawAverageChart() {
                     pointHoverBorderWidth: 2,
                     pointRadius: 1,
                     pointHitRadius: 10,
-                    data: [95, 97, 97, 96, 95, 97, 95, 97, 97, 96,
-                        97, 96, 96, 95, 94, 95, 94, 94, 94, 96, 94, 97,
-                        94, 94, 96, 97, 95, 94, 94, 97],
+                    data: uptimes,
                     spanGaps: false,
                 }
             ]
@@ -215,7 +228,54 @@ function drawAverageChart() {
     });
 }
 
-drawTodayChart();
-drawLifetimeChart();
-drawInstantChart();
-drawAverageChart();
+////////////
+// API Calls
+////////////
+
+function getApiInstant() {
+    var req = new XMLHttpRequest();
+    req.open("GET", API_URL + "instant", true)
+    req.setRequestHeader("Accept", "application/json");
+    req.send();
+    req.addEventListener("readystatechange", function() {
+        if(req.readyState === XMLHttpRequest.DONE && req.status === 200) {
+            var instantData = JSON.parse(req.responseText)['data'];
+            drawInstantChart(instantData);
+        }
+    });
+}
+
+function getApiDaily() {
+    var req = new XMLHttpRequest();
+    req.open("GET", API_URL + "daily", true)
+    req.setRequestHeader("Accept", "application/json");
+    req.send();
+
+    req.addEventListener("readystatechange", function() {
+        if(req.readyState === XMLHttpRequest.DONE && req.status === 200) {
+            var dailyData = JSON.parse(req.responseText)['data'];
+            var now = moment();
+
+            var sumUp = 0, sumDown = 0;
+            for (var i in dailyData)
+            {
+                sumUp   += dailyData[i].up;
+                sumDown += dailyData[i].down;
+
+                if (moment(dailyData[i].day).isSame(now, 'd'))
+                    drawTodayChart(dailyData[i].up, dailyData[i].down);
+            }
+            drawLifetimeChart(sumUp, sumDown);
+
+            var last30DaysData = dailyData.filter(d => { return now.diff(d.day, 'days') < 30 });
+            drawAverageChart(last30DaysData);
+        }
+    });
+}
+
+/////////
+// Action
+/////////
+
+getApiInstant();
+getApiDaily();
