@@ -111,6 +111,7 @@ function drawInstantChart(data) {
                     steppedLine: true,
                     backgroundColor: COLOR_BACKGROUND_UP,
                     borderColor: COLOR_BORDER_UP,
+                    borderWidth: 1,
                     borderCapStyle: 'butt',
                     borderDash: [],
                     borderDashOffset: 0.0,
