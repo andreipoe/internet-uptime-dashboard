@@ -16,7 +16,7 @@ const COLOR_BACKGROUND_DOWN = COLOR_BACKGROUND_ORANGE;
 const COLOR_BORDER_DOWN     = COLOR_BORDER_ORANGE;
 
 // API settings
-const API_URL = "http://your.hostname.here/api/"
+const API_URL = "/api/"
 
 ////////////////////
 // Dashboard drawing

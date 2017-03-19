@@ -8,7 +8,7 @@ This tool trades customisability for simplicity. The frontend consists of a sing
 
 ## Configuration
 
-The server's settings can be tweaked in the `const` block of `main.go`. The web dashboard settings are the top of the `dashboard.js` file. The only required configuration is setting the URL of the API in `dashboard.js`.
+The server's settings can be tweaked in the `const` block of `main.go`. The web dashboard settings are the top of the `dashboard.js` file. 
 
 ## Running instructions
 
@@ -22,8 +22,7 @@ The server's settings can be tweaked in the `const` block of `main.go`. The web 
 1. Download or clone this repository.
 2. Build the server, e.g. using `go build`.
 3. Run the server (and optionally set it to auto-start on boot).
-4. Set the URL of your server in `API_URL` at the top of `dashboard.js`.
-5. Be amazed by how bad your ISP's service is.
+4. Be amazed by how bad your ISP's service is.
 
 ## TODOs
 
